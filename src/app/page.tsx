@@ -267,7 +267,7 @@ export default function LotteryDapp() {
                       {loading ? "Processing..." : "Start New Lottery"}
                     </Button>
                     <Button
-                      onClick={() => pickWinner}
+                      onClick={pickWinner}
                       disabled={
                         loading || !lotteryStarted || participants.length < 2
                       }
