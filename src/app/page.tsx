@@ -71,6 +71,7 @@ export default function LotteryDapp() {
   const [depositAmount, setDepositAmount] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [lotteryStarted, setLotteryStarted] = useState<boolean>(false);
+  const [winner, setWinner] = useState<string | undefined>();
   const [participants, setParticipants] = useState<string[]>([]);
   const [winningAmount, setWinningAmount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -147,11 +148,35 @@ export default function LotteryDapp() {
     }
   };
 
+  const pickWinner = async () => {
+    const msg = { pick_winner: {} };
+    try {
+      await write(client, msg, bech32Address, CONTRACTS.lottery);
+      const res2 = await read(client, { winner: {} }, CONTRACTS.lottery);
+      setWinner(res2);
+    } catch (err) {
+      console.log(err);
+      setParticipants([]);
+    }
+  };
+
+  const getPreviousWinner = async () => {
+    const msg = { winner: {} };
+    try {
+      const res2 = await read(client, msg, CONTRACTS.lottery);
+      setWinner(res2);
+    } catch (err) {
+      console.log(err);
+      setParticipants([]);
+    }
+  };
+
   useEffect(() => {
     if (!client) return;
     getLotteryOwner();
     isLotteryStarted();
     getParticipants();
+    getPreviousWinner();
   }, [client, executeResult]);
 
   return (
@@ -183,7 +208,7 @@ export default function LotteryDapp() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
           <Card className="bg-gray-800 border-gray-700">
             <CardHeader>
               <CardTitle className="text-2xl flex items-center text-white">
@@ -242,7 +267,7 @@ export default function LotteryDapp() {
                       {loading ? "Processing..." : "Start New Lottery"}
                     </Button>
                     <Button
-                      onClick={() => execute("write", { pick_winner: {} })}
+                      onClick={() => pickWinner}
                       disabled={
                         loading || !lotteryStarted || participants.length < 2
                       }
@@ -265,8 +290,9 @@ export default function LotteryDapp() {
               <CardDescription>Try your luck!</CardDescription>
             </CardHeader>
             <CardContent>
+              Previous Winner: {winner}
               {!lotteryStarted && (
-                <div className="mb-4 bg-yellow-500/10 text-yellow-500 border-yellow-500/50">
+                <div className="my-4 bg-yellow-500/10 text-yellow-500 border-yellow-500/50">
                   <p>
                     Lottery is currently inactive. Please wait for the next
                     round to start.
